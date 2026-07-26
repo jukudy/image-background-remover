@@ -1,80 +1,81 @@
 # Image Background Remover
 
-A privacy-aware, no-signup image background remover built with Next.js, React, TypeScript, and Tailwind CSS.
+A privacy-aware image background remover built with Next.js App Router, React, TypeScript, Tailwind CSS, and Google sign-in powered by NextAuth.js.
+
+## Current stack
+
+- `next@16.2.11`
+- `react@19.2.4`
+- `next-auth@4`
+- JWT-only sessions with no database dependency
 
 ## Local development
 
-1. Copy `.env.example` to `.env.local`.
-2. Add a Remove.bg API key and Cloudflare Turnstile keys.
-3. If you want Google login locally, also add Google OAuth credentials and a localhost callback URI in `.env.local`.
-4. Run `npm install` and `npm run dev`.
-5. Open `http://localhost:3000`.
+1. Install dependencies:
+   `npm install`
+2. Fill `.env.local` from `.env.example`
+3. Start the app:
+   `npm run dev`
+4. Open `http://localhost:3000`
 
-Turnstile is bypassed only in non-production environments when no secret is configured. Remove.bg processing always requires `REMOVE_BG_API_KEY`.
+## Local environment variables
 
-## Google OAuth + D1
+```env
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=replace-with-a-random-32-byte-secret
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=
+REMOVE_BG_API_KEY=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+APP_ENV=development
+```
 
-This project includes a Google OAuth flow backed by Cloudflare D1:
+Generate the auth secret with:
 
-- `GET /api/auth/google` starts the OAuth flow
-- `GET /api/auth/google/callback` handles the Google callback
-- `POST /api/auth/logout` clears the login session
-- `GET /api/auth/me` returns the current authenticated user
+`openssl rand -base64 32`
 
-The D1 schema lives in `migrations/0001_google_oauth_auth.sql`.
+## Google sign-in routes
 
-### Production values
+NextAuth.js now owns the whole auth flow:
 
-Use these production values in Cloudflare:
+- `GET /api/auth/signin/google`
+- `GET /api/auth/callback/google`
+- `POST /api/auth/signout`
+- `GET /api/auth/session`
 
-- `NEXT_PUBLIC_SITE_URL=https://www.clearcut.help`
-- `GOOGLE_OAUTH_REDIRECT_URI=https://www.clearcut.help/api/auth/google/callback`
-- `GOOGLE_CLIENT_ID=<your Google OAuth client id>`
-- `GOOGLE_CLIENT_SECRET=<store as a Wrangler secret>`
+## Vercel production environment variables
 
-### Cloudflare setup
+```env
+NEXT_PUBLIC_SITE_URL=https://www.clearcut.help
+NEXTAUTH_URL=https://www.clearcut.help
+NEXTAUTH_SECRET=replace-with-a-random-32-byte-secret
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-turnstile-site-key
+TURNSTILE_SECRET_KEY=your-turnstile-secret-key
+REMOVE_BG_API_KEY=your-remove-bg-api-key
+APP_ENV=production
+```
 
-1. Create the D1 database:
-   `wrangler d1 create clearcut-auth`
-2. Copy the returned `database_id` into `wrangler.jsonc`.
-3. Apply migrations:
-   `npm run cf:d1:migrate:local`
-   `npm run cf:d1:migrate:remote`
-4. Store secrets in Cloudflare:
-   `wrangler secret put GOOGLE_CLIENT_SECRET`
-   `wrangler secret put REMOVE_BG_API_KEY`
-   `wrangler secret put TURNSTILE_SECRET_KEY`
-5. Preview the Cloudflare target:
-   `npm run cf:preview`
-6. Deploy:
-   `npm run cf:deploy`
+## Google Cloud Console
 
-### Google Console
-
-In Google Cloud Console, configure the OAuth app with:
+Recommended production OAuth settings:
 
 - Authorized JavaScript origin: `https://www.clearcut.help`
-- Authorized redirect URI: `https://www.clearcut.help/api/auth/google/callback`
+- Authorized redirect URI: `https://www.clearcut.help/api/auth/callback/google`
 
-If you want local Google login during `next dev`, you must also add:
+Recommended local OAuth settings:
 
 - Authorized JavaScript origin: `http://localhost:3000`
-- Authorized redirect URI: `http://localhost:3000/api/auth/google/callback`
+- Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
 
-### Local auth checklist
+## Domain policy
 
-1. Copy `.dev.vars.example` to `.dev.vars`
-2. Fill the Google client ID and secret in `.dev.vars`
-3. Run the local D1 migration:
-   `npm run auth:local:migrate`
-4. Start dev:
-   `npm run dev`
-5. Verify setup:
-   `npm run auth:local:doctor`
+`next.config.ts` permanently redirects every `*.vercel.app` hostname to `https://www.clearcut.help` so cookies and OAuth callbacks stay on a single canonical origin.
 
 ## API
 
-- `POST /api/remove-background` — accepts `multipart/form-data` with `image_file`, `turnstile_token`, `size=auto`, and `format=png`.
-- `GET /api/health` — returns `{ "status": "ok" }` without contacting Remove.bg.
-
-Uploaded images and results are streamed through the request lifecycle and are not intentionally persisted by this application.
+- `POST /api/remove-background` accepts `multipart/form-data` with `image_file`, `turnstile_token`, `size=auto`, and `format=png`
+- `GET /api/health` returns `{ "status": "ok" }`
