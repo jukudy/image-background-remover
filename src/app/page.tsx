@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BackgroundRemover } from "@/components/background-remover";
+import { SiteHeader } from "@/components/site-header";
 
 const steps = [
   { number: "01", title: "Upload", text: "Choose a JPG, PNG, or WebP image up to 20MB." },
@@ -61,24 +62,7 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
 
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-[#f8faf7]/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-slate-950">
-            <span className="grid size-9 place-items-center rounded-xl bg-[#143c32] text-white shadow-sm">
-              <span className="size-3.5 rounded-sm border-2 border-[#b8f36b]" />
-            </span>
-            <span className="text-lg">clearcut</span>
-          </Link>
-          <nav aria-label="Main navigation" className="hidden items-center gap-7 text-sm font-medium text-slate-600 sm:flex">
-            <a href="#how-it-works" className="transition hover:text-slate-950">How it works</a>
-            <a href="#faq" className="transition hover:text-slate-950">FAQ</a>
-            <Link href="/privacy" className="transition hover:text-slate-950">Privacy</Link>
-          </nav>
-          <a href="#tool" className="rounded-full bg-[#143c32] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0d2b24] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#143c32]">
-            Try it free
-          </a>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main>
         <section className="relative overflow-hidden px-5 pb-18 pt-16 lg:px-8 lg:pb-24 lg:pt-22">
